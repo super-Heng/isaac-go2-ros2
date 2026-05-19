@@ -132,11 +132,14 @@ class RobotDataManager(Node):
         )
 
     def use_sim_time(self):
-        # Define the command as a list
-        command = ["ros2", "param", "set", "/robot_data_manager", "use_sim_time", "true"]
-
-        # Run the command in a non-blocking way
-        subprocess.Popen(command)  
+        # Set use_sim_time on this node directly via rclpy (avoid spawning ros2 cli)
+        from rclpy.parameter import Parameter
+        try:
+            param = Parameter("use_sim_time", Parameter.Type.BOOL, True)
+            self.set_parameters([param])
+        except Exception:
+            # parameter may already be declared / set; ignore
+            pass
         return True
 
     def create_static_transform(self):

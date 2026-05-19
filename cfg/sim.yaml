@@ -4,18 +4,29 @@ defaults:
 num_envs: 1
 freq: 40 # can only be divisible by 200
 camera_follow: True
-env_name: obstacle-dense
+#env_name: warehouse
+#env_name: obstacle-dense
 # env_name: full-warehouse
+env_name: flat
 
 sensor:
-  enable_lidar: True
-  enable_camera: True
+  enable_lidar: False
+  #enable_lidar: True
+  enable_camera: False
+  #enable_camera: True
   color_image: True
   depth_image: True
-  semantic_segmentation: True
+   #semantic_segmentation: True
+  semantic_segmentation: False 
 
 sim_app:
   anti_aliasing: 0
   width: 1280
   height: 720
   hide_ui: False
+
+sim:
+  device: "cuda:0"
+  use_gpu_pipeline: True
+  physx:
+    use_gpu: True

@@ -15,10 +15,16 @@ AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
 args_cli = parser.parse_args()
 
+# Disable Kit's hang detector — long env.step() ticks under heavy sensors
+# would otherwise trigger the "Kit appears to be hanging" zenity dialog.
+import sys
+sys.argv += ["--/app/hangDetector/enabled=false"]
+
 # launch omniverse app
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
 
+sys.argv = [sys.argv[0]]
 """Rest everything follows."""
 
 import torch
@@ -41,8 +47,8 @@ def run_simulator(cfg):
     go2_env_cfg.decimation = math.ceil(1./go2_env_cfg.sim.dt/cfg.freq)
     go2_env_cfg.sim.render_interval = go2_env_cfg.decimation
     go2_ctrl.init_base_vel_cmd(cfg.num_envs)
-    # env, policy = go2_ctrl.get_rsl_flat_policy(go2_env_cfg)
-    env, policy = go2_ctrl.get_rsl_rough_policy(go2_env_cfg)
+    env, policy = go2_ctrl.get_rsl_flat_policy(go2_env_cfg)
+    #env, policy = go2_ctrl.get_rsl_rough_policy(go2_env_cfg)
 
     # Simulation environment
     if (cfg.env_name == "obstacle-dense"):
@@ -88,12 +94,17 @@ def run_simulator(cfg):
 
             # # ROS2 data
             dm.pub_ros2_data()
-            rclpy.spin_once(dm)
+            #rclpy.spin_once(dm)
+            rclpy.spin_once(dm, timeout_sec=0.0)
 
             # Camera follow
             if (cfg.camera_follow):
                 camera_follow(env)
 
+            # Pump the Kit UI / livestream frame so the hang detector and
+            # WebRTC stream stay alive while env.step() is heavy.
+            simulation_app.update()
+            
             # limit loop time
             elapsed_time = time.time() - start_time
             if elapsed_time < sim_step_dt:
